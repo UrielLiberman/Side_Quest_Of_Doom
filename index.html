@@ -3,260 +3,671 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chronicle of Skills - Uriel & Guy</title>
-
+<title>Chronicle of Skills</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
-  :root {
-    --bg-color: #0b0b12;
-    --card-bg: #161625;
-    --text-main: #e2e8f0;
-    --text-muted: #94a3b8;
-    --accent: #6366f1;
-    --accent-hover: #4f46e5;
-    
-    /* Quest Tiers */
-    --tier-common: #94a3b8;
-    --tier-uncommon: #4ade80;
-    --tier-rare: #3b82f6;
-    --tier-legendary: #fbbf24;
-  }
+/* ── TOKENS ──────────────────────────────────────────── */
+:root {
+  --ink:    #0e0c0a;
+  --parch:  #f5efe4;
+  --parch2: #ede4d3;
+  --parch3: #e0d4be;
+  --gold:   #b8860b;
+  --gold2:  #d4a017;
+  --gold3:  #f0c040;
+  --rust:   #8b3a2a;
+  --moss:   #3d5a3e;
+  --uriel-h:#6b3fa0;
+  --uriel-l:#e8dff5;
+  --guy-h:  #8b2020;
+  --guy-l:  #f5dada;
+  --border: rgba(90,70,30,0.25);
+  --shadow: 0 4px 24px rgba(0,0,0,0.12);
+}
 
-  body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background: var(--bg-color); 
-    color: var(--text-main); 
-    padding: 30px; 
-    max-width: 1000px; 
-    margin: 0 auto; 
-  }
+/* ── RESET & BASE ─────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Crimson Pro',Georgia,serif;
+  background: var(--parch);
+  color: var(--ink);
+  min-height:100vh;
+  background-image:
+    url("data:image/svg+xml,%3Csvg width='400' height='400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
 
-  h1, h2 { text-align: center; margin-bottom: 20px; font-weight: 600; }
-  h1 { color: #fff; font-size: 2.5rem; text-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
+/* ── SCROLLBAR ────────────────────────────────────────── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--parch2)}
+::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px}
 
-  hr { border: 0; height: 1px; background: #2d2d44; margin: 30px 0; }
+/* ── NAV ──────────────────────────────────────────────── */
+nav{
+  position:sticky;top:0;z-index:100;
+  background:var(--ink);
+  border-bottom:2px solid var(--gold);
+  display:flex;align-items:center;gap:0;
+  padding:0 32px;
+}
+.nav-brand{
+  font-family:'Cinzel',serif;
+  color:var(--gold3);
+  font-size:1rem;letter-spacing:0.12em;
+  padding:14px 24px 14px 0;
+  border-right:1px solid rgba(255,255,255,0.1);
+  margin-right:8px;
+  white-space:nowrap;
+}
+.nav-tabs{display:flex;gap:0;flex:1}
+.tab-btn{
+  font-family:'Cinzel',serif;
+  font-size:0.72rem;letter-spacing:0.1em;
+  color:rgba(245,239,228,0.5);
+  background:none;border:none;cursor:pointer;
+  padding:16px 20px;
+  border-bottom:2px solid transparent;
+  transition:all 0.2s;
+  text-transform:uppercase;
+}
+.tab-btn:hover{color:var(--gold3)}
+.tab-btn.active{color:var(--gold3);border-bottom-color:var(--gold3)}
 
-  button { 
-    background: var(--accent); color: white; border: none; 
-    padding: 10px 16px; border-radius: 8px; cursor: pointer; 
-    font-weight: bold; transition: all 0.2s; 
-  }
-  button:hover { background: var(--accent-hover); transform: translateY(-1px); }
-  
-  .controls { text-align: center; margin-bottom: 20px; }
+/* ── MAIN ─────────────────────────────────────────────── */
+main{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
 
-  /* Grid Layouts */
-  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-  .card { 
-    background: var(--card-bg); padding: 20px; 
-    border-radius: 12px; border: 1px solid #2d2d44; 
-    box-shadow: 0 4px 6px rgba(0,0,0,0.2); 
-  }
+/* ── PAGE HEADER ──────────────────────────────────────── */
+.page-header{text-align:center;margin-bottom:48px}
+.page-header h1{
+  font-family:'Cinzel',serif;
+  font-size:3rem;font-weight:900;
+  color:var(--ink);letter-spacing:0.06em;
+  line-height:1.1;
+}
+.page-header .sub{
+  font-style:italic;color:rgba(14,12,10,0.5);
+  font-size:1.15rem;margin-top:6px;
+}
+.divider{
+  display:flex;align-items:center;gap:16px;margin:20px auto;max-width:320px;
+}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider span{font-family:'Cinzel',serif;color:var(--gold);font-size:0.9rem}
 
-  /* Player Cards */
-  .player-card { text-align: center; border-top: 4px solid var(--accent); }
-  .player-name { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
-  .player-level { color: var(--tier-legendary); font-weight: bold; font-size: 1.2rem; }
-  .player-xp { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; }
+/* ── SECTION ─────────────────────────────────────────── */
+.section-label{
+  font-family:'Cinzel',serif;font-size:0.7rem;
+  letter-spacing:0.18em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--border)}
 
-  /* Quests */
-  .quest-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-  .quest-title { font-size: 1.2rem; font-weight: bold; }
-  .quest-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px; line-height: 1.4; }
-  
-  .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
-  .tier-common { background: rgba(148, 163, 184, 0.1); color: var(--tier-common); }
-  .tier-uncommon { background: rgba(74, 222, 128, 0.1); color: var(--tier-uncommon); }
-  .tier-rare { background: rgba(59, 130, 246, 0.1); color: var(--tier-rare); }
-  .tier-legendary { background: rgba(251, 191, 36, 0.1); color: var(--tier-legendary); }
+/* ── PLAYER CARDS ─────────────────────────────────────── */
+.players-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:48px}
+@media(max-width:600px){.players-row{grid-template-columns:1fr}}
+.player-card{
+  background:var(--parch2);
+  border:1px solid var(--border);
+  border-radius:4px;
+  padding:28px 24px 20px;
+  position:relative;
+  overflow:hidden;
+}
+.player-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+}
+.player-card.uriel::before{background:var(--uriel-h)}
+.player-card.guy::before{background:var(--guy-h)}
+.player-card .corner{
+  position:absolute;top:10px;right:12px;
+  font-family:'Cinzel',serif;font-size:0.65rem;
+  letter-spacing:0.1em;opacity:0.35;text-transform:uppercase;
+}
+.avatar-row{display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.avatar{
+  width:52px;height:52px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:1.4rem;font-weight:900;
+  flex-shrink:0;border:2px solid;
+}
+.uriel .avatar{background:var(--uriel-l);color:var(--uriel-h);border-color:var(--uriel-h)}
+.guy .avatar{background:var(--guy-l);color:var(--guy-h);border-color:var(--guy-h)}
+.p-name{font-family:'Cinzel',serif;font-size:1.3rem;font-weight:600;line-height:1}
+.p-title{font-style:italic;color:var(--gold);font-size:0.95rem;margin-top:3px}
+.p-level-badge{
+  display:inline-block;
+  font-family:'Cinzel',serif;font-size:0.65rem;
+  letter-spacing:0.1em;padding:3px 10px;border-radius:2px;
+  margin-top:8px;
+}
+.uriel .p-level-badge{background:var(--uriel-l);color:var(--uriel-h)}
+.guy .p-level-badge{background:var(--guy-l);color:var(--guy-h)}
+.xp-track{margin:16px 0 10px}
+.xp-labels{display:flex;justify-content:space-between;font-size:0.78rem;color:rgba(14,12,10,0.5);margin-bottom:6px}
+.xp-rail{height:6px;background:rgba(0,0,0,0.1);border-radius:3px;overflow:hidden}
+.xp-fill{height:100%;border-radius:3px;transition:width 0.7s cubic-bezier(.22,1,.36,1)}
+.uriel .xp-fill{background:linear-gradient(90deg,var(--uriel-h),#9b6fd4)}
+.guy .xp-fill{background:linear-gradient(90deg,var(--guy-h),#d06060)}
+.p-stats{display:flex;gap:0;border-top:1px solid var(--border);margin-top:16px;padding-top:16px}
+.p-stat{flex:1;text-align:center;border-right:1px solid var(--border)}
+.p-stat:last-child{border-right:none}
+.p-stat-n{font-family:'Cinzel',serif;font-size:1.4rem;font-weight:600;line-height:1}
+.p-stat-l{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(14,12,10,0.45);margin-top:3px}
 
-  .actions { display: flex; gap: 10px; }
-  .actions button { flex: 1; font-size: 0.9rem; padding: 8px; }
-  .actions button.btn-uriel { background: #0ea5e9; }
-  .actions button.btn-uriel:hover { background: #0284c7; }
-  .actions button.btn-guy { background: #f43f5e; }
-  .actions button.btn-guy:hover { background: #e11d48; }
+/* ── QUESTS GRID ─────────────────────────────────────── */
+.quests-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.quest-card{
+  background:var(--parch2);border:1px solid var(--border);
+  border-radius:4px;padding:20px;
+  position:relative;transition:box-shadow 0.2s,transform 0.2s;
+}
+.quest-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.quest-card.weekly{border-color:var(--gold2);background:#fdf8ee}
+.quest-card.weekly::after{
+  content:'WEEKLY';position:absolute;top:0;right:14px;
+  font-family:'Cinzel',serif;font-size:0.58rem;letter-spacing:0.15em;
+  background:var(--gold2);color:#fff;padding:2px 7px;border-radius:0 0 4px 4px;
+}
+.q-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.q-name{font-family:'Cinzel',serif;font-size:1rem;font-weight:600;line-height:1.2;flex:1;margin-right:10px}
+.tier-pip{
+  width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;
+}
+.pip-common{background:#94a3b8}.pip-uncommon{background:#4ade80}
+.pip-rare{background:#60a5fa}.pip-legendary{background:var(--gold3)}
+.q-lore{
+  font-style:italic;font-size:0.85rem;color:rgba(14,12,10,0.55);
+  margin:6px 0 4px;line-height:1.4;
+}
+.q-desc{font-size:0.9rem;color:rgba(14,12,10,0.75);line-height:1.5;margin-bottom:6px}
+.q-meta{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.q-tag{
+  font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;
+  background:rgba(0,0,0,0.06);color:rgba(14,12,10,0.55);
+  padding:2px 7px;border-radius:2px;
+}
+.q-xp{font-family:'Cinzel',serif;font-size:0.78rem;color:var(--gold)}
+.q-actions{display:flex;gap:8px}
+.q-btn{
+  flex:1;border:1px solid;border-radius:3px;
+  font-family:'Cinzel',serif;font-size:0.72rem;letter-spacing:0.06em;
+  padding:9px 8px;cursor:pointer;transition:all 0.15s;
+  display:flex;align-items:center;justify-content:center;gap:5px;
+}
+.q-btn.uriel-btn{
+  background:var(--uriel-l);color:var(--uriel-h);border-color:var(--uriel-h);
+}
+.q-btn.uriel-btn:hover:not(:disabled){background:var(--uriel-h);color:#fff}
+.q-btn.guy-btn{
+  background:var(--guy-l);color:var(--guy-h);border-color:var(--guy-h);
+}
+.q-btn.guy-btn:hover:not(:disabled){background:var(--guy-h);color:#fff}
+.q-btn:disabled{opacity:0.4;cursor:default;background:transparent}
+.q-btn .done-mark{font-size:0.9rem}
 
+/* ── PROFILES TAB ────────────────────────────────────── */
+.profiles-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+@media(max-width:640px){.profiles-grid{grid-template-columns:1fr}}
+.profile-big{
+  background:var(--parch2);border:1px solid var(--border);border-radius:4px;
+  overflow:hidden;
+}
+.profile-banner{
+  height:80px;display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+.uriel .profile-banner{background:linear-gradient(135deg,#3d1f6b,#6b3fa0)}
+.guy .profile-banner{background:linear-gradient(135deg,#6b1010,#8b2020)}
+.profile-banner-avatar{
+  width:72px;height:72px;border-radius:50%;
+  border:3px solid rgba(255,255,255,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Cinzel',serif;font-size:2rem;font-weight:900;
+  color:rgba(255,255,255,0.9);
+  position:absolute;bottom:-36px;
+}
+.profile-body{padding:48px 24px 24px;text-align:center}
+.profile-name{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:900}
+.profile-title{font-style:italic;color:var(--gold);font-size:1rem;margin-top:4px}
+.profile-class{
+  display:inline-block;margin-top:10px;
+  font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;
+  padding:4px 14px;border-radius:2px;border:1px solid;
+}
+.uriel .profile-class{background:var(--uriel-l);color:var(--uriel-h);border-color:var(--uriel-h)}
+.guy .profile-class{background:var(--guy-l);color:var(--guy-h);border-color:var(--guy-h)}
+.profile-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:0;
+  margin-top:24px;border-top:1px solid var(--border);
+}
+.ps{padding:16px 8px;text-align:center;border-right:1px solid var(--border)}
+.ps:last-child{border-right:none}
+.ps-n{font-family:'Cinzel',serif;font-size:1.6rem;font-weight:600}
+.ps-l{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.09em;color:rgba(14,12,10,0.45);margin-top:2px}
+.recent-quests{padding:0 24px 24px}
+.rq-item{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid var(--border);font-size:0.88rem;
+}
+.rq-item:last-child{border-bottom:none}
+.rq-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.rq-name{flex:1;font-style:italic}
+.rq-xp{font-family:'Cinzel',serif;font-size:0.8rem;color:var(--gold)}
+.rq-time{font-size:0.72rem;color:rgba(14,12,10,0.4)}
+.cat-breakdown{padding:0 24px 24px}
+.cat-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:0.85rem}
+.cat-name{width:90px;font-style:italic;color:rgba(14,12,10,0.65)}
+.cat-bar-rail{flex:1;height:5px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:3px}
+.cat-count{font-family:'Cinzel',serif;font-size:0.78rem;color:var(--gold);width:18px;text-align:right}
+
+/* ── LOG TAB ─────────────────────────────────────────── */
+.log-table{width:100%;border-collapse:collapse}
+.log-table th{
+  font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.12em;
+  text-transform:uppercase;color:var(--gold);
+  padding:8px 12px;border-bottom:2px solid var(--border);
+  text-align:left;
+}
+.log-table td{
+  padding:11px 12px;border-bottom:1px solid var(--border);
+  font-size:0.88rem;vertical-align:middle;
+}
+.log-table tr:hover td{background:rgba(0,0,0,0.03)}
+.log-player-pill{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:3px 9px;border-radius:2px;font-size:0.78rem;
+  font-family:'Cinzel',serif;letter-spacing:0.04em;
+}
+.lp-uriel{background:var(--uriel-l);color:var(--uriel-h)}
+.lp-guy{background:var(--guy-l);color:var(--guy-h)}
+.log-xp{font-family:'Cinzel',serif;color:var(--gold);font-weight:600}
+.empty-state{text-align:center;padding:60px 20px;font-style:italic;color:rgba(14,12,10,0.4);font-size:1.1rem}
+
+/* ── TOAST ───────────────────────────────────────────── */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink);color:var(--gold3);
+  font-family:'Cinzel',serif;font-size:0.85rem;letter-spacing:0.06em;
+  padding:12px 24px;border-radius:3px;border:1px solid var(--gold);
+  opacity:0;transition:all 0.3s;pointer-events:none;z-index:999;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── TABS ────────────────────────────────────────────── */
+.tab-page{display:none}
+.tab-page.active{display:block}
+
+/* ── LOADING ─────────────────────────────────────────── */
+.loading{text-align:center;padding:60px;font-style:italic;color:rgba(14,12,10,0.4);font-size:1.1rem}
 </style>
 </head>
-
 <body>
 
-<h1>⚔ Chronicle of Skills</h1>
+<nav>
+  <div class="nav-brand">⚔ Chronicle</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('quests')">Quests</button>
+    <button class="tab-btn" onclick="switchTab('profiles')">Profiles</button>
+    <button class="tab-btn" onclick="switchTab('log')">Activity Log</button>
+  </div>
+</nav>
 
-<div class="controls">
-  <button onclick="seedQuests()">📜 Seed Starter Quests</button>
+<main>
+
+<!-- QUESTS TAB -->
+<div class="tab-page active" id="tab-quests">
+  <div class="page-header">
+    <h1>Chronicle of Skills</h1>
+    <p class="sub">The eternal rivalry of Uriel & Guy</p>
+    <div class="divider"><span>✦</span></div>
+  </div>
+
+  <div class="section-label">The Contenders</div>
+  <div class="players-row" id="players-overview">
+    <div class="loading">Consulting the ancient scrolls…</div>
+  </div>
+
+  <div class="section-label">Active Quests</div>
+  <div class="quests-grid" id="quests-grid">
+    <div class="loading">Loading quests…</div>
+  </div>
 </div>
 
-<h2>The Contenders</h2>
-<div id="players" class="grid">
-  <!-- Players render here -->
+<!-- PROFILES TAB -->
+<div class="tab-page" id="tab-profiles">
+  <div class="page-header">
+    <h1>The Contenders</h1>
+    <p class="sub">Deeds written in the annals of time</p>
+    <div class="divider"><span>✦</span></div>
+  </div>
+  <div class="profiles-grid" id="profiles-grid">
+    <div class="loading">Loading profiles…</div>
+  </div>
 </div>
 
-<hr>
-
-<h2>Active Quests</h2>
-<div id="quests" class="grid">
-  <!-- Quests render here -->
+<!-- LOG TAB -->
+<div class="tab-page" id="tab-log">
+  <div class="page-header">
+    <h1>Activity Log</h1>
+    <p class="sub">Every deed recorded for eternity</p>
+    <div class="divider"><span>✦</span></div>
+  </div>
+  <div id="log-table-wrap">
+    <div class="loading">Retrieving chronicles…</div>
+  </div>
 </div>
+
+</main>
+<div class="toast" id="toast"></div>
 
 <script>
-/* =======================
-   SUPABASE INIT
-======================= */
+/* ───────── SUPABASE ───────── */
 const SUPABASE_URL = "https://lvtrhpvoewsjhghhxyef.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dHJocHZvZXdzamhnaGh4eWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDAyMjksImV4cCI6MjA5MzExNjIyOX0.mi2jiLJoB0kCpprg8nOk0cKfXjsa0Xx1hx57FOlji0U";
-
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-/* =======================
-   STATE & CONSTANTS
-======================= */
-let players = [];
-let quests = [];
-
-const TARGET_PLAYERS = ["Uriel", "Guy"];
-
-const XP_MAP = {
-  common: 50,
-  uncommon: 120,
-  rare: 250,
-  legendary: 500
+/* ───────── CONSTANTS ───────── */
+const XP_MAP = { common:50, uncommon:120, rare:250, legendary:500 };
+const TITLES = [
+  [0,"Wandering Soul"],[2,"Apprentice"],[4,"Journeyman"],[6,"Adventurer"],
+  [8,"Seasoned Warrior"],[10,"Champion"],[14,"Grand Master"],[18,"Mythic Legend"],[25,"Eternal"]
+];
+const CLASSES = {
+  Uriel:{ name:"Shadow Weaver", desc:"Master of code and shadow" },
+  Guy:  { name:"Iron Wanderer", desc:"Forged by fire and will" }
+};
+const CAT_COLORS = {
+  Programming:"#6b3fa0", Physical:"#8b2020", Intellect:"#1d5c8a",
+  Social:"#3d5a3e",   Creative:"#a05a1a", Life:"#5a3d7a",
+  Challenge:"#b8860b", Worldly:"#2a6060", Weekly:"#c07800"
 };
 
-// RPG Level Formula: 1 level per 500 XP
-const getLevel = (xp) => Math.floor(xp / 500) + 1;
-const getXpToNextLevel = (xp) => 500 - (xp % 500);
+const getLevel  = xp => Math.floor(xp/500)+1;
+const getXpIn   = xp => xp%500;
+const getTitle  = xp => { const lv=getLevel(xp); let t=TITLES[0][1]; for(const[l,n] of TITLES){ if(lv>=l) t=n; } return t; };
 
-/* =======================
-   INITIALIZATION
-======================= */
-async function loadAll() {
-  const p = await sb.from('players').select('*').order('id');
-  const q = await sb.from('quests').select('*').order('id', { ascending: false });
+const QUESTS = [
+  /* Programming */
+  { name:"The Codex Initiation",   lore:"The tome speaks only to those who command the machine.",  description:"Write 100 lines of functional code in any language and run it successfully.", category:"Programming", tier:"rare" },
+  { name:"Digital Architect",      lore:"Great empires begin with a single blueprint.",             description:"Plan, build, and deploy a mini-project or working script from scratch.", category:"Programming", tier:"legendary" },
+  { name:"Bug Slayer",             lore:"Even the mightiest code hides demons within.",             description:"Find and fix 3 bugs in an existing codebase or script.", category:"Programming", tier:"uncommon" },
+  /* Physical */
+  { name:"Iron Will",              lore:"The flesh is the vessel. Forge it well.",                  description:"Complete 30 pushups, 30 situps, and a 10-minute run in one session.", category:"Physical", tier:"uncommon" },
+  { name:"Trail Seeker",           lore:"The path reveals itself only to those who walk it.",       description:"Go on a 30-minute walk outside with no phone — just you and the world.", category:"Physical", tier:"uncommon" },
+  { name:"The Gauntlet",           lore:"Pain is the tutor time cannot replace.",                   description:"Complete a full workout: 5 rounds of pushups, squats, situps, and planks.", category:"Physical", tier:"rare" },
+  /* Intellect */
+  { name:"The Librarian's Pact",   lore:"Knowledge read is a sword sharpened.",                    description:"Read 2 chapters of any book and write 3 sentences about what you learned.", category:"Intellect", tier:"common" },
+  { name:"Lecture of the Sages",   lore:"Sit at the feet of masters, even through a screen.",      description:"Watch a full educational lecture or documentary and take notes.", category:"Intellect", tier:"common" },
+  { name:"The Riddler's Trial",    lore:"The mind is a labyrinth with no exit — explore it.",      description:"Solve 10 logic puzzles or complete a full chess game vs a bot.", category:"Intellect", tier:"uncommon" },
+  /* Worldly */
+  { name:"The Hermit's Journey",   lore:"One day without the noise. Find yourself in the silence.",description:"Spend an entire afternoon (3+ hrs) off social media and screens. No exceptions.", category:"Worldly", tier:"rare" },
+  { name:"New Tongue",             lore:"To speak another language is to inhabit another soul.",   description:"Learn 20 words or one basic conversation in a new language.", category:"Worldly", tier:"uncommon" },
+  { name:"First Note",             lore:"Every musician began by simply striking a key.",           description:"Play a recognisable melody on any instrument, real or virtual. Record proof.", category:"Worldly", tier:"rare" },
+  { name:"The Cook's Trial",       lore:"No adventurer thrives on tavern scraps alone.",            description:"Cook a full meal from scratch — no apps, no deliveries, no shortcuts.", category:"Life", tier:"common" },
+  /* Social */
+  { name:"Fellowship Bond",        lore:"A party divided falls to every dungeon.",                  description:"Play 1 hour of any multiplayer game together — Minecraft, Roblox, anything.", category:"Social", tier:"uncommon" },
+  { name:"Letters to the Living",  lore:"Time passes. The words you never send drift away.",       description:"Reach out and have a real conversation with someone you haven't spoken to in a month.", category:"Social", tier:"common" },
+  { name:"The Debate Circle",      lore:"Speak one side. Then the other. Truth lives in between.",  description:"Argue both sides of a controversial topic for 10 minutes each.", category:"Intellect", tier:"uncommon" },
+  /* Creative */
+  { name:"Visionary Stroke",       lore:"The artist sees what others walk past.",                  description:"Create any piece of digital or physical artwork — drawing, design, photo edit.", category:"Creative", tier:"rare" },
+  { name:"The Author's Burden",    lore:"Every great saga began as a single sentence.",            description:"Write a short story (min 300 words) about anything. Make it yours.", category:"Creative", tier:"uncommon" },
+  /* Challenge */
+  { name:"The Triple Crown",       lore:"Legend is forged in a single day, not a lifetime.",       description:"Complete 3 different quests in a single calendar day.", category:"Challenge", tier:"legendary" },
+  /* Weekly */
+  { name:"Weekly Warlord",         lore:"Dominion belongs to the one who never rests.",            description:"Be the first to complete 5 quests in this calendar week.", category:"Weekly", tier:"legendary" },
+];
 
-  players = p.data || [];
-  quests = q.data || [];
+/* ───────── STATE ───────── */
+let players=[], quests=[], completions=[];
 
-  // Ensure Uriel and Guy exist in the DB
-  await ensurePlayersExist();
-
-  render();
+function getWeekStart(){
+  const d=new Date();const day=d.getDay();
+  const diff=d.getDate()-day+(day===0?-6:1);
+  const m=new Date(d);m.setDate(diff);m.setHours(0,0,0,0);return m.toISOString();
 }
 
-async function ensurePlayersExist() {
-  const existingNames = players.map(p => p.name);
-  const missingPlayers = TARGET_PLAYERS.filter(name => !existingNames.includes(name));
+/* ───────── LOAD ───────── */
+async function loadAll(){
+  const [pR,qR,cR]=await Promise.all([
+    sb.from('players').select('*').order('id'),
+    sb.from('quests').select('*').order('id',{ascending:false}),
+    sb.from('completions').select('*').order('created_at',{ascending:false}).limit(200)
+  ]);
+  players=pR.data||[]; quests=qR.data||[]; completions=cR.data||[];
+  await ensurePlayers(); await ensureQuests();
+  renderAll();
+}
 
-  if (missingPlayers.length > 0) {
-    const insertData = missingPlayers.map(name => ({ name: name, xp: 0, streak: 0 }));
-    await sb.from('players').insert(insertData);
-    
-    // Reload players if we had to insert
-    const p = await sb.from('players').select('*').order('id');
-    players = p.data || [];
+async function ensurePlayers(){
+  const names=players.map(p=>p.name);
+  const miss=["Uriel","Guy"].filter(n=>!names.includes(n));
+  if(miss.length){
+    await sb.from('players').insert(miss.map(n=>({name:n,xp:0,streak:0})));
+    const p=await sb.from('players').select('*').order('id');
+    players=p.data||[];
   }
 }
 
-loadAll();
-
-/* =======================
-   SEED DEFAULT QUESTS
-======================= */
-async function seedQuests() {
-  const starterQuests = [
-    { name: "Code Weaver", description: "Write 100 lines of functional C++, C#, or Python code.", category: "Programming", tier: "rare" },
-    { name: "Physical Conditioning", description: "Complete 30 pushups and 30 situps in one session.", category: "Physical", tier: "uncommon" },
-    { name: "Pathway Progression", description: "Read 2 chapters of a book or novel.", category: "Intellect", tier: "common" },
-    { name: "Guild Operations", description: "Play 1 hour of multiplayer games (Minecraft, Roblox, etc.) with the squad.", category: "Social", tier: "uncommon" },
-    { name: "System Architect", description: "Build and deploy a functional mini-project or script.", category: "Programming", tier: "legendary" }
-  ];
-
-  await sb.from('quests').insert(starterQuests);
-  loadAll();
+async function ensureQuests(){
+  if(quests.length===0){
+    await sb.from('quests').insert(QUESTS);
+    const q=await sb.from('quests').select('*').order('id',{ascending:false});
+    quests=q.data||[];
+  }
 }
 
-/* =======================
-   COMPLETE QUEST
-======================= */
-async function completeQuest(playerId, questId) {
-  // Find the quest and player from our local state
-  const quest = quests.find(q => q.id === questId);
-  const player = players.find(p => p.id === playerId);
-  
-  if (!quest || !player) return;
+/* ───────── COMPLETE ───────── */
+async function completeQuest(pid, qid){
+  const quest=quests.find(q=>q.id===qid);
+  const player=players.find(p=>p.id===pid);
+  if(!quest||!player) return;
 
-  const xpEarned = XP_MAP[quest.tier] || 50;
+  const isWeekly = quest.category==='Weekly';
+  const ws = getWeekStart();
 
-  // Log completion
-  await sb.from('completions').insert([
-    { player_id: playerId, quest_id: quest.id, xp_earned: xpEarned }
-  ]);
+  // Block duplicate completions
+  const already = isWeekly
+    ? completions.find(c=>c.player_id===pid&&c.quest_id===qid&&c.created_at>=ws)
+    : completions.find(c=>c.player_id===pid&&c.quest_id===qid);
 
-  // Update Player XP
-  await sb
-    .from('players')
-    .update({ xp: player.xp + xpEarned })
-    .eq('id', playerId);
+  if(already){ showToast("Quest already completed!"); return; }
 
-  loadAll();
+  const base=XP_MAP[quest.tier]||50;
+  const xp=isWeekly?Math.round(base*1.5):base;
+  const prevLv=getLevel(player.xp||0);
+
+  await sb.from('completions').insert([{player_id:pid,quest_id:qid,xp_earned:xp}]);
+  await sb.from('players').update({xp:(player.xp||0)+xp}).eq('id',pid);
+
+  // Optimistic update so buttons disable instantly
+  completions.unshift({player_id:pid,quest_id:qid,xp_earned:xp,created_at:new Date().toISOString()});
+  players=players.map(p=>p.id===pid?{...p,xp:(p.xp||0)+xp}:p);
+
+  const newLv=getLevel((player.xp||0)+xp);
+  if(newLv>prevLv) showToast(`${player.name} reached Level ${newLv} — ${getTitle((player.xp||0)+xp)}!`);
+  else showToast(`+${xp} XP for ${player.name}!`);
+
+  renderAll();
 }
 
-/* =======================
-   RENDER
-======================= */
-function render() {
-  // Render Players
-  document.getElementById("players").innerHTML = players.map(p => {
-    const level = getLevel(p.xp || 0);
-    const xpToNext = getXpToNextLevel(p.xp || 0);
-    
-    return `
-      <div class="card player-card">
-        <div class="player-name">${p.name}</div>
-        <div class="player-level">Level ${level}</div>
-        <div class="player-xp">Total XP: ${p.xp || 0} (Next Lvl: ${xpToNext} XP)</div>
-      </div>
-    `;
-  }).join("");
+/* ───────── RENDER ───────── */
+function renderAll(){
+  renderOverview();
+  renderQuests();
+  renderProfiles();
+  renderLog();
+}
 
-  // Render Quests
-  document.getElementById("quests").innerHTML = quests.map(q => {
-    const tierClass = `tier-${q.tier.toLowerCase()}`;
-    const xpReward = XP_MAP[q.tier.toLowerCase()] || 50;
-
-    // Generate buttons dynamically based on our players array
-    const actionButtons = players.map(p => `
-      <button class="btn-${p.name.toLowerCase()}" onclick="completeQuest(${p.id}, ${q.id})">
-        ${p.name} Did It!
-      </button>
-    `).join("");
-
-    return `
-      <div class="card">
-        <div class="quest-header">
-          <div class="quest-title">${q.name} <span style="color:var(--text-muted); font-size:0.8rem; font-weight:normal;">[+${xpReward} XP]</span></div>
-          <div class="badge ${tierClass}">${q.tier}</div>
-        </div>
-        <div class="quest-desc">${q.description}</div>
-        <div class="actions">
-          ${actionButtons}
+function renderOverview(){
+  document.getElementById('players-overview').innerHTML = players.map(p=>{
+    const xp=p.xp||0, lv=getLevel(xp), xpIn=getXpIn(xp), pct=Math.round(xpIn/500*100);
+    const cls=p.name.toLowerCase();
+    const total=completions.filter(c=>c.player_id===p.id).length;
+    const thisWeek=completions.filter(c=>c.player_id===p.id&&c.created_at>=getWeekStart()).length;
+    return `<div class="player-card ${cls}">
+      <div class="corner">${p.name}</div>
+      <div class="avatar-row">
+        <div class="avatar">${p.name[0]}</div>
+        <div>
+          <div class="p-name">${p.name}</div>
+          <div class="p-title">${getTitle(xp)}</div>
+          <div class="p-level-badge">LEVEL ${lv}</div>
         </div>
       </div>
-    `;
-  }).join("");
+      <div class="xp-track">
+        <div class="xp-labels"><span>${xpIn} XP</span><span>${500-xpIn} to next</span></div>
+        <div class="xp-rail"><div class="xp-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="p-stats">
+        <div class="p-stat"><div class="p-stat-n">${xp}</div><div class="p-stat-l">Total XP</div></div>
+        <div class="p-stat"><div class="p-stat-n">${total}</div><div class="p-stat-l">Completed</div></div>
+        <div class="p-stat"><div class="p-stat-n">${thisWeek}</div><div class="p-stat-l">This Week</div></div>
+      </div>
+    </div>`;
+  }).join('');
 }
 
-/* =======================
-   REALTIME SYNC
-======================= */
-sb.channel('realtime')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, loadAll)
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, loadAll)
+function renderQuests(){
+  const ws=getWeekStart();
+  const isDone=(pid,qid,weekly)=>{
+    if(weekly) return completions.find(c=>c.player_id===pid&&c.quest_id===qid&&c.created_at>=ws);
+    return completions.find(c=>c.player_id===pid&&c.quest_id===qid);
+  };
+  document.getElementById('quests-grid').innerHTML = quests.map(q=>{
+    const isWeekly=q.category==='Weekly';
+    const base=XP_MAP[q.tier]||50;
+    const xpShow=isWeekly?`+${Math.round(base*1.5)} XP ✦ 1.5×`:`+${base} XP`;
+    const btns=players.map(p=>{
+      const done=isDone(p.id,q.id,isWeekly);
+      const cls=p.name==='Uriel'?'uriel-btn':'guy-btn';
+      return `<button class="q-btn ${cls}"${done?' disabled':''} onclick="completeQuest(${p.id},${q.id})">
+        ${done?'<span class="done-mark">✓</span> ':''}${p.name}
+      </button>`;
+    }).join('');
+    return `<div class="quest-card${isWeekly?' weekly':''}">
+      <div class="q-top">
+        <div class="q-name">${q.name}</div>
+        <div class="tier-pip pip-${q.tier}" title="${q.tier}"></div>
+      </div>
+      ${q.lore?`<div class="q-lore">"${q.lore}"</div>`:''}
+      <div class="q-desc">${q.description}</div>
+      <div class="q-meta">
+        <span class="q-tag">${q.category}</span>
+        <span class="q-tag">${q.tier}</span>
+        <span class="q-xp">${xpShow}</span>
+      </div>
+      <div class="q-actions">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderProfiles(){
+  document.getElementById('profiles-grid').innerHTML = players.map(p=>{
+    const xp=p.xp||0, lv=getLevel(xp);
+    const cls=p.name.toLowerCase();
+    const pComp=completions.filter(c=>c.player_id===p.id);
+    const totalXp=pComp.reduce((s,c)=>s+c.xp_earned,0);
+    const recent=pComp.slice(0,5);
+    const catCounts={};
+    for(const c of pComp){
+      const q=quests.find(qu=>qu.id===c.quest_id);
+      if(q){ catCounts[q.category]=(catCounts[q.category]||0)+1; }
+    }
+    const maxCat=Math.max(1,...Object.values(catCounts));
+    const catRows=Object.entries(catCounts).sort((a,b)=>b[1]-a[1]).map(([cat,cnt])=>`
+      <div class="cat-row">
+        <div class="cat-name">${cat}</div>
+        <div class="cat-bar-rail"><div class="cat-bar-fill" style="width:${Math.round(cnt/maxCat*100)}%;background:${CAT_COLORS[cat]||'#888'}"></div></div>
+        <div class="cat-count">${cnt}</div>
+      </div>`).join('');
+    const recentRows=recent.map(c=>{
+      const q=quests.find(qu=>qu.id===c.quest_id);
+      if(!q) return '';
+      const time=new Date(c.created_at).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+      return `<div class="rq-item">
+        <div class="rq-dot" style="background:${CAT_COLORS[q.category]||'#888'}"></div>
+        <div class="rq-name">${q.name}</div>
+        <div class="rq-xp">+${c.xp_earned}</div>
+        <div class="rq-time">${time}</div>
+      </div>`;
+    }).join('');
+    const rank=players.slice().sort((a,b)=>(b.xp||0)-(a.xp||0)).findIndex(pl=>pl.id===p.id)+1;
+    const classInfo=CLASSES[p.name]||{name:"Unknown",desc:""};
+    return `<div class="profile-big ${cls}">
+      <div class="profile-banner">
+        <div class="profile-banner-avatar">${p.name[0]}</div>
+      </div>
+      <div class="profile-body">
+        <div class="profile-name">${p.name}</div>
+        <div class="profile-title">${getTitle(xp)}</div>
+        <div class="profile-class">${classInfo.name}</div>
+        <div class="profile-stats">
+          <div class="ps"><div class="ps-n">${lv}</div><div class="ps-l">Level</div></div>
+          <div class="ps"><div class="ps-n">#${rank}</div><div class="ps-l">Rank</div></div>
+          <div class="ps"><div class="ps-n">${pComp.length}</div><div class="ps-l">Quests</div></div>
+        </div>
+      </div>
+      ${catRows?`<div class="cat-breakdown"><div class="section-label" style="font-size:0.6rem">By Category</div>${catRows}</div>`:''}
+      ${recentRows?`<div class="recent-quests"><div class="section-label" style="font-size:0.6rem">Recent Deeds</div>${recentRows}</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+function renderLog(){
+  if(!completions.length){
+    document.getElementById('log-table-wrap').innerHTML='<div class="empty-state">No deeds recorded yet. The chronicle awaits.</div>';
+    return;
+  }
+  const rows=completions.slice(0,50).map(c=>{
+    const p=players.find(pl=>pl.id===c.player_id);
+    const q=quests.find(qu=>qu.id===c.quest_id);
+    if(!p||!q) return '';
+    const pCls=p.name==='Uriel'?'lp-uriel':'lp-guy';
+    const time=new Date(c.created_at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    return `<tr>
+      <td><span class="log-player-pill ${pCls}">${p.name}</span></td>
+      <td style="font-style:italic">${q.name}</td>
+      <td><span class="q-tag">${q.category}</span></td>
+      <td class="log-xp">+${c.xp_earned}</td>
+      <td style="color:rgba(14,12,10,0.45);font-size:0.8rem">${time}</td>
+    </tr>`;
+  }).filter(Boolean).join('');
+  document.getElementById('log-table-wrap').innerHTML=`
+    <table class="log-table">
+      <thead><tr><th>Adventurer</th><th>Deed</th><th>Domain</th><th>XP</th><th>When</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+/* ───────── TOAST ───────── */
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2800);
+}
+
+/* ───────── TABS ───────── */
+function switchTab(name){
+  document.querySelectorAll('.tab-page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ───────── REALTIME ───────── */
+sb.channel('chr-v3')
+  .on('postgres_changes',{event:'*',schema:'public',table:'players'},loadAll)
+  .on('postgres_changes',{event:'*',schema:'public',table:'quests'},loadAll)
+  .on('postgres_changes',{event:'*',schema:'public',table:'completions'},loadAll)
   .subscribe();
 
+loadAll();
 </script>
-
 </body>
 </html>
