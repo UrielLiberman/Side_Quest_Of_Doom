@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Chronicle of Skills — 2 Player Sync</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+body{margin:0;font-family:Arial;background:#0b0a10;color:#eee;padding:20px}
+.card{background:#151022;padding:16px;border-radius:12px;margin-bottom:12px;border:1px solid #2a2340}
+button{padding:10px 12px;border-radius:8px;border:none;cursor:pointer}
+input{padding:10px;border-radius:8px;border:1px solid #333;background:#111;color:#fff}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.player{flex:1;min-width:200px}
+.xp{color:#b48cff;font-weight:bold}
+.quest{padding:10px;border-radius:8px;background:#1a1428;margin-top:8px}
+</style>
+</head>
+<body>
+
+<h1>⚔ 2-Player Chronicle Sync</h1>
+
+<div class="card">
+  <h3>Login</h3>
+  <div class="row">
+    <input id="username" placeholder="Enter username" />
+    <button onclick="login()">Join Realm</button>
+  </div>
+  <div id="status"></div>
+</div>
+
+<div class="card">
+  <h3>Players</h3>
+  <div id="players"></div>
+</div>
+
+<div class="card">
+  <h3>Quests</h3>
+  <div id="quests"></div>
+</div>
+
+<script>
+// 🔥 1. PUT YOUR SUPABASE INFO HERE
+const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPABASE_KEY = "YOUR_ANON_KEY";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// sample quests
+const QUESTS = [
+  { id:"q1", name:"Run 5km", xp:120 },
+  { id:"q2", name:"Build a Website", xp:250 },
+  { id:"q3", name:"100 Pushups", xp:200 }
+];
+
+async function login() {
+  const username = document.getElementById("username").value.trim();
+  if(!username) return;
+
+  // upsert user
+  const { data } = await sb
+    .from("players")
+    .upsert({ name: username, xp: 0 }, { onConflict: "name" })
+    .select()
+    .single();
+
+  currentUser = data;
+  document.getElementById("status").innerText = "Logged in as " + username;
+
+  subscribe();
+  loadPlayers();
+  loadQuests();
+}
+
+async function loadPlayers(){
+  const { data } = await sb.from("players").select("*").order("xp", { ascending:false });
+
+  document.getElementById("players").innerHTML = data.map(p=>`
+    <div class='player'>
+      <b>${p.name}</b>
+      <div class='xp'>XP: ${p.xp}</div>
+      <button onclick="addXP('${p.name}', 50)">+50 XP</button>
+    </div>
+  `).join("");
+}
+
+async function addXP(name, amount){
+  const { data } = await sb
+    .from("players")
+    .select("xp")
+    .eq("name", name)
+    .single();
+
+  await sb
+    .from("players")
+    .update({ xp: data.xp + amount })
+    .eq("name", name);
+
+  loadPlayers();
+}
+
+function loadQuests(){
+  document.getElementById("quests").innerHTML = QUESTS.map(q=>`
+    <div class='quest'>
+      <b>${q.name}</b> (+${q.xp} XP)
+      <button onclick="completeQuest('${q.id}')">Complete</button>
+    </div>
+  `).join("");
+}
+
+async function completeQuest(id){
+  const q = QUESTS.find(x=>x.id===id);
+
+  await sb.from("completions").insert({
+    player: currentUser.name,
+    quest: q.name,
+    xp: q.xp
+  });
+
+  await addXP(currentUser.name, q.xp);
+}
+
+function subscribe(){
+  sb
+    .channel('players-live')
+    .on('postgres_changes', { event:'*', schema:'public', table:'players' }, payload=>{
+      loadPlayers();
+    })
+    .subscribe();
+}
+</script>
+
+</body>
+</html>
