@@ -1,133 +1,203 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Chronicle of Skills - Multiplayer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chronicle of Skills - Uriel & Guy</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body { font-family: Arial; background:#0b0b12; color:white; padding:20px; }
-button { cursor:pointer; }
-.card { background:#161625; padding:12px; margin:10px 0; border-radius:10px; }
+  :root {
+    --bg-color: #0b0b12;
+    --card-bg: #161625;
+    --text-main: #e2e8f0;
+    --text-muted: #94a3b8;
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    
+    /* Quest Tiers */
+    --tier-common: #94a3b8;
+    --tier-uncommon: #4ade80;
+    --tier-rare: #3b82f6;
+    --tier-legendary: #fbbf24;
+  }
+
+  body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: var(--bg-color); 
+    color: var(--text-main); 
+    padding: 30px; 
+    max-width: 1000px; 
+    margin: 0 auto; 
+  }
+
+  h1, h2 { text-align: center; margin-bottom: 20px; font-weight: 600; }
+  h1 { color: #fff; font-size: 2.5rem; text-shadow: 0 0 10px rgba(99, 102, 241, 0.5); }
+
+  hr { border: 0; height: 1px; background: #2d2d44; margin: 30px 0; }
+
+  button { 
+    background: var(--accent); color: white; border: none; 
+    padding: 10px 16px; border-radius: 8px; cursor: pointer; 
+    font-weight: bold; transition: all 0.2s; 
+  }
+  button:hover { background: var(--accent-hover); transform: translateY(-1px); }
+  
+  .controls { text-align: center; margin-bottom: 20px; }
+
+  /* Grid Layouts */
+  .grid { display: grid; gap: 20px; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+  .card { 
+    background: var(--card-bg); padding: 20px; 
+    border-radius: 12px; border: 1px solid #2d2d44; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2); 
+  }
+
+  /* Player Cards */
+  .player-card { text-align: center; border-top: 4px solid var(--accent); }
+  .player-name { font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; }
+  .player-level { color: var(--tier-legendary); font-weight: bold; font-size: 1.2rem; }
+  .player-xp { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px; }
+
+  /* Quests */
+  .quest-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .quest-title { font-size: 1.2rem; font-weight: bold; }
+  .quest-desc { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 15px; line-height: 1.4; }
+  
+  .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-transform: uppercase; }
+  .tier-common { background: rgba(148, 163, 184, 0.1); color: var(--tier-common); }
+  .tier-uncommon { background: rgba(74, 222, 128, 0.1); color: var(--tier-uncommon); }
+  .tier-rare { background: rgba(59, 130, 246, 0.1); color: var(--tier-rare); }
+  .tier-legendary { background: rgba(251, 191, 36, 0.1); color: var(--tier-legendary); }
+
+  .actions { display: flex; gap: 10px; }
+  .actions button { flex: 1; font-size: 0.9rem; padding: 8px; }
+  .actions button.btn-uriel { background: #0ea5e9; }
+  .actions button.btn-uriel:hover { background: #0284c7; }
+  .actions button.btn-guy { background: #f43f5e; }
+  .actions button.btn-guy:hover { background: #e11d48; }
+
 </style>
 </head>
 
 <body>
 
-<h1>⚔ Chronicle Sync Test</h1>
+<h1>⚔ Chronicle of Skills</h1>
 
-<div>
-  <input id="p1" placeholder="Player 1 name">
-  <input id="p2" placeholder="Player 2 name">
-  <button onclick="createPlayers()">Create Players</button>
+<div class="controls">
+  <button onclick="seedQuests()">📜 Seed Starter Quests</button>
+</div>
+
+<h2>The Contenders</h2>
+<div id="players" class="grid">
+  <!-- Players render here -->
 </div>
 
 <hr>
 
-<h2>Players</h2>
-<div id="players"></div>
-
-<hr>
-
-<h2>Quests</h2>
-<button onclick="addQuest()">Add Test Quest</button>
-<div id="quests"></div>
+<h2>Active Quests</h2>
+<div id="quests" class="grid">
+  <!-- Quests render here -->
+</div>
 
 <script>
 /* =======================
    SUPABASE INIT
 ======================= */
-
 const SUPABASE_URL = "https://lvtrhpvoewsjhghhxyef.supabase.co";
-const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY_HERE";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx2dHJocHZvZXdzamhnaGh4eWVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NDAyMjksImV4cCI6MjA5MzExNjIyOX0.mi2jiLJoB0kCpprg8nOk0cKfXjsa0Xx1hx57FOlji0U";
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /* =======================
-   STATE
+   STATE & CONSTANTS
 ======================= */
-
 let players = [];
 let quests = [];
 
-/* =======================
-   LOAD DATA
-======================= */
+const TARGET_PLAYERS = ["Uriel", "Guy"];
 
+const XP_MAP = {
+  common: 50,
+  uncommon: 120,
+  rare: 250,
+  legendary: 500
+};
+
+// RPG Level Formula: 1 level per 500 XP
+const getLevel = (xp) => Math.floor(xp / 500) + 1;
+const getXpToNextLevel = (xp) => 500 - (xp % 500);
+
+/* =======================
+   INITIALIZATION
+======================= */
 async function loadAll() {
-  const p = await sb.from('players').select('*');
-  const q = await sb.from('quests').select('*');
+  const p = await sb.from('players').select('*').order('id');
+  const q = await sb.from('quests').select('*').order('id', { ascending: false });
 
   players = p.data || [];
   quests = q.data || [];
 
+  // Ensure Uriel and Guy exist in the DB
+  await ensurePlayersExist();
+
   render();
+}
+
+async function ensurePlayersExist() {
+  const existingNames = players.map(p => p.name);
+  const missingPlayers = TARGET_PLAYERS.filter(name => !existingNames.includes(name));
+
+  if (missingPlayers.length > 0) {
+    const insertData = missingPlayers.map(name => ({ name: name, xp: 0, streak: 0 }));
+    await sb.from('players').insert(insertData);
+    
+    // Reload players if we had to insert
+    const p = await sb.from('players').select('*').order('id');
+    players = p.data || [];
+  }
 }
 
 loadAll();
 
 /* =======================
-   CREATE PLAYERS
+   SEED DEFAULT QUESTS
 ======================= */
+async function seedQuests() {
+  const starterQuests = [
+    { name: "Code Weaver", description: "Write 100 lines of functional C++, C#, or Python code.", category: "Programming", tier: "rare" },
+    { name: "Physical Conditioning", description: "Complete 30 pushups and 30 situps in one session.", category: "Physical", tier: "uncommon" },
+    { name: "Pathway Progression", description: "Read 2 chapters of a book or novel.", category: "Intellect", tier: "common" },
+    { name: "Guild Operations", description: "Play 1 hour of multiplayer games (Minecraft, Roblox, etc.) with the squad.", category: "Social", tier: "uncommon" },
+    { name: "System Architect", description: "Build and deploy a functional mini-project or script.", category: "Programming", tier: "legendary" }
+  ];
 
-async function createPlayers() {
-  const name1 = document.getElementById("p1").value;
-  const name2 = document.getElementById("p2").value;
-
-  await sb.from('players').insert([
-    { name: name1, xp: 0, streak: 0 },
-    { name: name2, xp: 0, streak: 0 }
-  ]);
-
-  loadAll();
-}
-
-/* =======================
-   ADD QUEST
-======================= */
-
-async function addQuest() {
-  await sb.from('quests').insert([
-    {
-      name: "Do 20 pushups",
-      description: "Strength challenge",
-      category: "Physical",
-      tier: "common"
-    }
-  ]);
-
+  await sb.from('quests').insert(starterQuests);
   loadAll();
 }
 
 /* =======================
    COMPLETE QUEST
 ======================= */
+async function completeQuest(playerId, questId) {
+  // Find the quest and player from our local state
+  const quest = quests.find(q => q.id === questId);
+  const player = players.find(p => p.id === playerId);
+  
+  if (!quest || !player) return;
 
-async function completeQuest(playerId, quest) {
-  const xpMap = {
-    common: 50,
-    uncommon: 120,
-    rare: 250,
-    legendary: 500
-  };
+  const xpEarned = XP_MAP[quest.tier] || 50;
 
-  const xp = xpMap[quest.tier];
-
+  // Log completion
   await sb.from('completions').insert([
-    {
-      player_id: playerId,
-      quest_id: quest.id,
-      xp_earned: xp
-    }
+    { player_id: playerId, quest_id: quest.id, xp_earned: xpEarned }
   ]);
 
-  const player = players.find(p => p.id === playerId);
-
+  // Update Player XP
   await sb
     .from('players')
-    .update({ xp: player.xp + xp })
+    .update({ xp: player.xp + xpEarned })
     .eq('id', playerId);
 
   loadAll();
@@ -136,34 +206,51 @@ async function completeQuest(playerId, quest) {
 /* =======================
    RENDER
 ======================= */
-
 function render() {
-  document.getElementById("players").innerHTML =
-    players.map(p => `
-      <div class="card">
-        <b>${p.name}</b><br>
-        XP: ${p.xp || 0}
+  // Render Players
+  document.getElementById("players").innerHTML = players.map(p => {
+    const level = getLevel(p.xp || 0);
+    const xpToNext = getXpToNextLevel(p.xp || 0);
+    
+    return `
+      <div class="card player-card">
+        <div class="player-name">${p.name}</div>
+        <div class="player-level">Level ${level}</div>
+        <div class="player-xp">Total XP: ${p.xp || 0} (Next Lvl: ${xpToNext} XP)</div>
       </div>
+    `;
+  }).join("");
+
+  // Render Quests
+  document.getElementById("quests").innerHTML = quests.map(q => {
+    const tierClass = `tier-${q.tier.toLowerCase()}`;
+    const xpReward = XP_MAP[q.tier.toLowerCase()] || 50;
+
+    // Generate buttons dynamically based on our players array
+    const actionButtons = players.map(p => `
+      <button class="btn-${p.name.toLowerCase()}" onclick="completeQuest(${p.id}, ${q.id})">
+        ${p.name} Did It!
+      </button>
     `).join("");
 
-  document.getElementById("quests").innerHTML =
-    quests.map(q => `
+    return `
       <div class="card">
-        <b>${q.name}</b><br>
-        ${q.description}<br><br>
-        ${players.map(p =>
-          `<button onclick="completeQuest(${p.id}, ${JSON.stringify(q).replace(/"/g,'&quot;')})">
-            ${p.name} complete
-          </button>`
-        ).join(" ")}
+        <div class="quest-header">
+          <div class="quest-title">${q.name} <span style="color:var(--text-muted); font-size:0.8rem; font-weight:normal;">[+${xpReward} XP]</span></div>
+          <div class="badge ${tierClass}">${q.tier}</div>
+        </div>
+        <div class="quest-desc">${q.description}</div>
+        <div class="actions">
+          ${actionButtons}
+        </div>
       </div>
-    `).join("");
+    `;
+  }).join("");
 }
 
 /* =======================
    REALTIME SYNC
 ======================= */
-
 sb.channel('realtime')
   .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, loadAll)
   .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, loadAll)
