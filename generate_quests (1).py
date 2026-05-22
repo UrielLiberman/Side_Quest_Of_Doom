@@ -11,6 +11,8 @@ GET YOUR FREE API KEYS:
 Usage:
   python generate_quests.py --url YOUR_SUPABASE_URL --key YOUR_SERVICE_ROLE_KEY
 
+  
+
 Options:
   --provider gemini|groq   Which AI to use (default: gemini)
   --gemini-key KEY         Gemini API key (or set GEMINI_API_KEY env var)
