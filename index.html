@@ -1,1 +1,175 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chronicle of Skills - Multiplayer</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body { font-family: Arial; background:#0b0b12; color:white; padding:20px; }
+button { cursor:pointer; }
+.card { background:#161625; padding:12px; margin:10px 0; border-radius:10px; }
+</style>
+</head>
+
+<body>
+
+<h1>⚔ Chronicle Sync Test</h1>
+
+<div>
+  <input id="p1" placeholder="Player 1 name">
+  <input id="p2" placeholder="Player 2 name">
+  <button onclick="createPlayers()">Create Players</button>
+</div>
+
+<hr>
+
+<h2>Players</h2>
+<div id="players"></div>
+
+<hr>
+
+<h2>Quests</h2>
+<button onclick="addQuest()">Add Test Quest</button>
+<div id="quests"></div>
+
+<script>
+/* =======================
+   SUPABASE INIT
+======================= */
+
+const SUPABASE_URL = "https://lvtrhpvoewsjhghhxyef.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_YOUR_ANON_KEY_HERE";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+/* =======================
+   STATE
+======================= */
+
+let players = [];
+let quests = [];
+
+/* =======================
+   LOAD DATA
+======================= */
+
+async function loadAll() {
+  const p = await sb.from('players').select('*');
+  const q = await sb.from('quests').select('*');
+
+  players = p.data || [];
+  quests = q.data || [];
+
+  render();
+}
+
+loadAll();
+
+/* =======================
+   CREATE PLAYERS
+======================= */
+
+async function createPlayers() {
+  const name1 = document.getElementById("p1").value;
+  const name2 = document.getElementById("p2").value;
+
+  await sb.from('players').insert([
+    { name: name1, xp: 0, streak: 0 },
+    { name: name2, xp: 0, streak: 0 }
+  ]);
+
+  loadAll();
+}
+
+/* =======================
+   ADD QUEST
+======================= */
+
+async function addQuest() {
+  await sb.from('quests').insert([
+    {
+      name: "Do 20 pushups",
+      description: "Strength challenge",
+      category: "Physical",
+      tier: "common"
+    }
+  ]);
+
+  loadAll();
+}
+
+/* =======================
+   COMPLETE QUEST
+======================= */
+
+async function completeQuest(playerId, quest) {
+  const xpMap = {
+    common: 50,
+    uncommon: 120,
+    rare: 250,
+    legendary: 500
+  };
+
+  const xp = xpMap[quest.tier];
+
+  await sb.from('completions').insert([
+    {
+      player_id: playerId,
+      quest_id: quest.id,
+      xp_earned: xp
+    }
+  ]);
+
+  const player = players.find(p => p.id === playerId);
+
+  await sb
+    .from('players')
+    .update({ xp: player.xp + xp })
+    .eq('id', playerId);
+
+  loadAll();
+}
+
+/* =======================
+   RENDER
+======================= */
+
+function render() {
+  document.getElementById("players").innerHTML =
+    players.map(p => `
+      <div class="card">
+        <b>${p.name}</b><br>
+        XP: ${p.xp || 0}
+      </div>
+    `).join("");
+
+  document.getElementById("quests").innerHTML =
+    quests.map(q => `
+      <div class="card">
+        <b>${q.name}</b><br>
+        ${q.description}<br><br>
+        ${players.map(p =>
+          `<button onclick="completeQuest(${p.id}, ${JSON.stringify(q).replace(/"/g,'&quot;')})">
+            ${p.name} complete
+          </button>`
+        ).join(" ")}
+      </div>
+    `).join("");
+}
+
+/* =======================
+   REALTIME SYNC
+======================= */
+
+sb.channel('realtime')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'players' }, loadAll)
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'quests' }, loadAll)
+  .subscribe();
+
+</script>
+
+</body>
+</html>
